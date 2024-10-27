@@ -14,6 +14,7 @@ urlpatterns = [
     #
     path(r'style/<int:pk>/', views.GetStyle.as_view(), name='get-style-by-id'), # получить лук (GET),
     path(r'style/create/', views.GetStyle.as_view(), name='get-style-by-id'), # получить лук (POST),
+    path(r'style/update/', views.GetStyle.as_view(), name='put-style-by-id'), # изменить конкретную заявку (PUT),
     path(r'history-list-styles/', views.ListStyles.as_view(), name='history-list-styles-by-username'), # получить историю луков (GET),
     #
     # # Users

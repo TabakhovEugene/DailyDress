@@ -184,7 +184,7 @@ class GetStyle(APIView):
                         return cloth.weather in ['', 'Дождь']
                     return cloth.weather == ''
                 else:
-                    return cloth.weather == ''
+                    return True
 
             def temp_filter(cloth:Cloth) -> bool:
                 return cloth.temp_range[0] <= temp <= cloth.temp_range[1]
@@ -204,7 +204,7 @@ class GetStyle(APIView):
                     massive[i] = (((items[i].temp_range[0] - temp) ** 2 + (items[i].temp_range[1] - temp) ** 2) / sqrt(2)) + (10 - items[i].like_rate)
                 minimum = min(massive)
                 ind = massive.index(minimum)
-                if random() < 0.2:
+                if random() < 0.8:
                     return items[ind]
                 else:
                     return items[randint(0, len(items) - 1)]
@@ -293,21 +293,41 @@ class GetStyle(APIView):
 
         return Response(response, status=status.HTTP_200_OK)
 
+    def put(self, request):
+        data = request.data
+        clothes = Cloth.objects.filter(
+            cloth__style=data['generation_id']  # Проверка на соответствие стоянки
+        )
+
+        review = data['review']
+
+        if review == 'Холодно':
+            for cloth in clothes:
+                cloth.temp_range[0] = cloth.temp_range[0] + 2
+                cloth.temp_range[1] = cloth.temp_range[1] + 2
+                cloth.save()
+        if review == 'Жарко':
+            for cloth in clothes:
+                cloth.temp_range[1] = cloth.temp_range[1] - 2
+                cloth.temp_range[0] = cloth.temp_range[0] - 2
+                cloth.save()
+        return Response(status=status.HTTP_200_OK)
+
 
 
 class ListStyles(APIView):
     def get(self, request):
         if 'date' in request.data and 'status' in request.data:
-            styles = Style.objects.filter(date_for_style__gte=request.data['date'])
+            styles = Style.objects.filter(date_for_style__gte=request.data['date']).order_by('-id_style')
         else:
-            styles = Style.objects.all()
+            styles = Style.objects.all().order_by('-id_style')
         styles_serializer = StyleSerializer(styles, many=True)
         response = styles_serializer.data
 
         for style_data in response:
             id_style = style_data['id_style']
             current_clothes = Cloth.objects.filter(
-                cloth__id_style=id_style
+                cloth__style=id_style
             )
 
             clothes_serializer = ClothListSerializer(current_clothes, many=True)
